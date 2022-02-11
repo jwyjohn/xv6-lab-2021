@@ -1,0 +1,27 @@
+{
+    "files.associations": {
+        "*.COBOL*": "cobol",
+        "*.COB*": "cobol",
+        "*.COBCOPY*": "cobol",
+        "*.COPYBOOK*": "cobol",
+        "*.COPY*": "cobol",
+        "*.PL1*": "pl1",
+        "*.PLI*": "pl1",
+        "*.INC*": "pl1",
+        "*.INCLUDE*": "pl1",
+        "*.JCL*": "jcl",
+        "*.ASM*": "hlasm",
+        "*.ASSEMBLE*": "hlasm",
+        "*.HLASM*": "hlasm",
+        "*.HLA*": "hlasm",
+        "*.rmd": "markdown",
+        "defs.h": "c",
+        "riscv.h": "c",
+        "spinlock.h": "c",
+        "memlayout.h": "c",
+        "param.h": "c",
+        "types.h": "c",
+        "proc.h": "c",
+        "sysinfo.h": "c"
+    }
+}
