@@ -1,0 +1,13 @@
+
+xv6 kernel is booting
+
+hart 1 starting
+hart 2 starting
+init: starting sh
+$ sh < xargstest.sh
+$ echo DONE
+$ $ $ $ $ hello
+hello
+hello
+$ $ DONE
+qemu-system-riscv64: terminating on signal 15 from pid 5428 (make)
