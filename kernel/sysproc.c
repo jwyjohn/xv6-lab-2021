@@ -107,3 +107,28 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+extern pte_t *walk(pagetable_t, uint64, int);
+
+
+uint64
+sys_pgaccess(void)
+{
+  uint64 srcva,st;
+  int len;
+  char buf[MAX_PGACCESS_NUM / 8];
+  struct proc *p = myproc();
+  
+  argaddr(0,&srcva);
+  argint(1,&len);
+  argaddr(2,&st);
+  if ((len > (MAX_PGACCESS_NUM / 8)) || (len < 1)) return -1;
+
+  for (int i=0; i < len; i++)
+  {
+    pte_t *pte = walk(p->pagetable, srcva + i * PGSIZE, 0);
+    uint64 perm = *pte & PXMASK;
+    if ((perm & PTE_A) | )
+  }
+  return 0;
+}
