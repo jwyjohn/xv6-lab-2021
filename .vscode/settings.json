@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "__debug": "c",
+        "exception": "c",
+        "new": "c"
+    }
+}
