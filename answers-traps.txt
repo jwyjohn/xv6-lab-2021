@@ -1,0 +1,43 @@
+Q: 
+1) Which registers contain arguments to functions? 
+2) For example, which register holds 13 in main's call to printf?
+A:
+1) 'ax' regesters contain arguments to functions, with 'a' stands for 'argument'. 
+2) Register 'a2' holds 13 in main's call to printf.
+
+Q:
+1) Where is the call to function f in the assembly code for main? 
+2) Where is the call to g? (Hint: the compiler may inline functions.)
+A:
+1)  52:	fce080e7          	jalr	-50(ra) # 1c <f>
+2)  34:	fd0080e7          	jalr	-48(ra) # 0 <g>
+
+Q:
+At what address is the function printf located?
+A:
+  6c:	9cc080e7          	jalr	-1588(ra) # a34 <printf>
+
+Q:
+What value is in the register ra just after the jalr to printf in main?
+A:
+0x1
+
+Q:
+Run the following code.
+
+	unsigned int i = 0x00646c72;
+	printf("H%x Wo%s", 57616, &i);
+      
+What is the output? Here's an ASCII table(http://web.cs.mun.ca/~michael/c/ascii-table.html) that maps bytes to characters.
+The output depends on that fact that the RISC-V is little-endian. If the RISC-V were instead big-endian what would you set i to in order to yield the same output? Would you need to change 57616 to a different value?
+A:
+"HE110 World"
+0x00646c73
+No
+
+Q:
+In the following code, what is going to be printed after 'y='? (note: the answer is not a specific value.) Why does this happen?
+
+	printf("x=%d y=%d", 3);
+A:
+The 4-bytes after the address of const 3. This would happen due to undefined memory.
