@@ -109,7 +109,6 @@ extern uint64 sys_connect(void);
 #endif
 #ifdef LAB_PGTBL
 extern uint64 sys_pgaccess(void);
-#define MAX_PGACCESS_NUM 512
 #endif
 
 static uint64 (*syscalls[])(void) = {

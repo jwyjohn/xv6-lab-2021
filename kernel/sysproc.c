@@ -11,10 +11,10 @@ uint64
 sys_exit(void)
 {
   int n;
-  if(argint(0, &n) < 0)
+  if (argint(0, &n) < 0)
     return -1;
   exit(n);
-  return 0;  // not reached
+  return 0; // not reached
 }
 
 uint64
@@ -33,7 +33,7 @@ uint64
 sys_wait(void)
 {
   uint64 p;
-  if(argaddr(0, &p) < 0)
+  if (argaddr(0, &p) < 0)
     return -1;
   return wait(p);
 }
@@ -44,11 +44,11 @@ sys_sbrk(void)
   int addr;
   int n;
 
-  if(argint(0, &n) < 0)
+  if (argint(0, &n) < 0)
     return -1;
-  
+
   addr = myproc()->sz;
-  if(growproc(n) < 0)
+  if (growproc(n) < 0)
     return -1;
   return addr;
 }
@@ -59,13 +59,14 @@ sys_sleep(void)
   int n;
   uint ticks0;
 
-
-  if(argint(0, &n) < 0)
+  if (argint(0, &n) < 0)
     return -1;
   acquire(&tickslock);
   ticks0 = ticks;
-  while(ticks - ticks0 < n){
-    if(myproc()->killed){
+  while (ticks - ticks0 < n)
+  {
+    if (myproc()->killed)
+    {
       release(&tickslock);
       return -1;
     }
@@ -75,12 +76,43 @@ sys_sleep(void)
   return 0;
 }
 
-
 #ifdef LAB_PGTBL
-int
-sys_pgaccess(void)
+extern pte_t *walk(pagetable_t, uint64, int);
+int sys_pgaccess(void)
 {
   // lab pgtbl: your code here.
+  uint64 srcva, st;
+  int len;
+  uint64 buf = 0;
+  struct proc *p = myproc();
+
+  acquire(&p->lock);
+
+  argaddr(0, &srcva);
+  argint(1, &len);
+  argaddr(2, &st);
+  if ((len > 64) || (len < 1))
+    return -1;
+  pte_t *pte;
+  for (int i = 0; i < len; i++)
+  {
+    pte = walk(p->pagetable, srcva + i * PGSIZE, 0);
+    if(pte == 0){
+      return -1;
+    }
+    if((*pte & PTE_V) == 0){
+      return -1;
+    }
+    if((*pte & PTE_U) == 0){
+      return -1;
+    }
+    if(*pte & PTE_A){
+      *pte = *pte & ~PTE_A;
+      buf |= (1 << i);  
+    }
+  }
+  release(&p->lock);
+  copyout(p->pagetable, st, (char *)&buf, ((len -1) / 8) + 1);
   return 0;
 }
 #endif
@@ -90,7 +122,7 @@ sys_kill(void)
 {
   int pid;
 
-  if(argint(0, &pid) < 0)
+  if (argint(0, &pid) < 0)
     return -1;
   return kill(pid);
 }
@@ -106,29 +138,4 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
-}
-
-extern pte_t *walk(pagetable_t, uint64, int);
-
-
-uint64
-sys_pgaccess(void)
-{
-  uint64 srcva,st;
-  int len;
-  char buf[MAX_PGACCESS_NUM / 8];
-  struct proc *p = myproc();
-  
-  argaddr(0,&srcva);
-  argint(1,&len);
-  argaddr(2,&st);
-  if ((len > (MAX_PGACCESS_NUM / 8)) || (len < 1)) return -1;
-
-  for (int i=0; i < len; i++)
-  {
-    pte_t *pte = walk(p->pagetable, srcva + i * PGSIZE, 0);
-    uint64 perm = *pte & PXMASK;
-    if ((perm & PTE_A) | )
-  }
-  return 0;
 }
