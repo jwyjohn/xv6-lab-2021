@@ -36,6 +36,7 @@ trapinithart(void)
 // handle an interrupt, exception, or system call from user space.
 // called from trampoline.S
 //
+extern uint8 referencecount[PHYSTOP/PGSIZE];
 void
 usertrap(void)
 {
@@ -73,26 +74,54 @@ usertrap(void)
   } else if (r_scause() == 12 || r_scause() == 15){
     // deal with cow pages
     pte_t *pte;
-    // uint64 pa, va;
-    uint64 va;
+    uint64 pa, va;
+    // uint64 va;
     uint flags;
     char *mem;
 
     va = r_stval();
+    if(va >= MAXVA)
+    {
+      p->killed = 1;
+      exit(-1);
+    }
+      
     if((pte = walk(p->pagetable, va, 0)) == 0)
-      panic("cowhandler: pte should exist");
+    {
+      // panic("cowhandler: pte should exist");
+      p->killed = 1;
+      exit(-1);
+    }
     if((*pte & PTE_V) == 0)
-      panic("cowhandler: page not present");
+    {
+      // panic("cowhandler: page not present");
+      p->killed = 1;
+      exit(-1);
+    }
     if((*pte & PTE_COW) == 0)
-      panic("cowhandler: page not cow");
-    // pa = PTE2PA(*pte);
+    {
+      // panic("cowhandler: page not cow");
+      p->killed = 1;
+      exit(-1);
+    }
+
+    pa = PTE2PA(*pte);
     flags = PTE_FLAGS(*pte) | PTE_W;
     flags &= ~(PTE_COW);
+    // printf("cowhandler: scause=%d va=%p pa=%p\n",r_scause(),va,pa);
     if((mem = kalloc()) == 0)
-      panic("cowhandler: kalloc failed");
-    uvmunmap(p->pagetable, PGROUNDDOWN(va), 1, 0);
-    // memmove(mem, (char*)pa, PGSIZE);
-    if(mappages(p->pagetable, va, PGSIZE, (uint64)mem, flags) != 0){
+    {
+      // printf("%d: cowhandler: kalloc failed, killed the process\n",p->pid);
+      p->killed = 1;
+      exit(-1);
+    }
+    // printf("%d: cowhandler: kalloc succeeded with pa=%p\n",p->pid,mem);
+    // printf("%d: cowhandler: uvmunmap succeeded with va=%p\n",p->pid,PGROUNDDOWN(va));
+    memmove(mem, (char*)pa, PGSIZE);
+    uvmunmap(p->pagetable, PGROUNDDOWN(va), 1, 1);
+    // printf("%d: cowhandler: memmove succeeded with from pa=%p to mem=%p\n",p->pid,pa,mem);
+    // if(mappages(p->pagetable, va, PGSIZE, (uint64)mem, flags) != 0){   <-------不知道为啥这个就不行
+    if(mappages(p->pagetable, PGROUNDDOWN(va), PGSIZE, (uint64)mem, flags) != 0){
       kfree(mem);
       panic("cowhandler: mappages failed");
     }
