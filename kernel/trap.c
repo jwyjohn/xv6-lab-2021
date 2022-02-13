@@ -15,6 +15,9 @@ extern char trampoline[], uservec[], userret[];
 void kernelvec();
 
 extern int devintr();
+extern pte_t *walk(pagetable_t, uint64, int);
+extern void *memmove(void *, const void *, uint);
+extern int mappages(pagetable_t, uint64, uint64, uint64, int);
 
 void
 trapinit(void)
@@ -67,7 +70,34 @@ usertrap(void)
     syscall();
   } else if((which_dev = devintr()) != 0){
     // ok
-  } else {
+  } else if (r_scause() == 12 || r_scause() == 15){
+    // deal with cow pages
+    pte_t *pte;
+    // uint64 pa, va;
+    uint64 va;
+    uint flags;
+    char *mem;
+
+    va = r_stval();
+    if((pte = walk(p->pagetable, va, 0)) == 0)
+      panic("cowhandler: pte should exist");
+    if((*pte & PTE_V) == 0)
+      panic("cowhandler: page not present");
+    if((*pte & PTE_COW) == 0)
+      panic("cowhandler: page not cow");
+    // pa = PTE2PA(*pte);
+    flags = PTE_FLAGS(*pte) | PTE_W;
+    flags &= ~(PTE_COW);
+    if((mem = kalloc()) == 0)
+      panic("cowhandler: kalloc failed");
+    uvmunmap(p->pagetable, PGROUNDDOWN(va), 1, 0);
+    // memmove(mem, (char*)pa, PGSIZE);
+    if(mappages(p->pagetable, va, PGSIZE, (uint64)mem, flags) != 0){
+      kfree(mem);
+      panic("cowhandler: mappages failed");
+    }
+  }
+  else {
     printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
     printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
     p->killed = 1;
