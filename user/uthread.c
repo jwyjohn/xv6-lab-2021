@@ -87,7 +87,7 @@ thread_schedule(void)
      * Invoke thread_switch to switch from t to next_thread:
      * thread_switch(??, ??);
      */
-    // t->state = RUNNABLE;
+    // t->state = RUNNABLE; 这里不用把线程状态改成RUNNABLE，否则就会让0线程也能跑，导致出错；yield()已经改过了
     thread_switch((uint64)&t->context, (uint64)&current_thread->context);
 
   } else
