@@ -115,7 +115,7 @@ e1000_transmit(struct mbuf *m)
     // the E1000 hasn't finished the corresponding previous transmission request, 
     // so return an error.
     printf("e1000_transmit: tx queue full\n");
-    // __sync_synchronize();
+    __sync_synchronize();
     // https://www.cnblogs.com/weijunji/p/xv6-study-16.html 的作者这里有__sync_synchronize(); 但本猫还没搞明白其作用。
     release(&e1000_lock);
     
@@ -146,7 +146,7 @@ e1000_transmit(struct mbuf *m)
     regs[E1000_TDT] = (regs[E1000_TDT] + 1) % TX_RING_SIZE;
     // printf("e1000_transmit: package added to tx queue %d\n",idx);
   }
-  // __sync_synchronize();
+  __sync_synchronize();
   // https://www.cnblogs.com/weijunji/p/xv6-study-16.html 的作者这里有__sync_synchronize(); 但本猫还没搞明白其作用。
   release(&e1000_lock);
 
@@ -181,8 +181,9 @@ e1000_recv(void)
     dest->addr = (uint64)rx_mbufs[idx]->head;
     dest->status = 0;
     regs[E1000_RDT] = idx;
-    // __sync_synchronize();
+    __sync_synchronize();
     // https://www.cnblogs.com/weijunji/p/xv6-study-16.html 的作者这里有__sync_synchronize(); 但本猫还没搞明白其作用。
+    // 好像会使得发包收包的顺序有变化
     release(&e1000_lock);
 
     net_rx(buf);
