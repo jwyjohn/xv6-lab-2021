@@ -8,5 +8,8 @@ struct buf {
   struct buf *prev; // LRU cache list
   struct buf *next;
   uchar data[BSIZE];
+  uint64 time;
 };
 
+#define NBUCKET 19
+#define HASH(x) ((x) % NBUCKET)
