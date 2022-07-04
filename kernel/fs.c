@@ -205,7 +205,6 @@ ialloc(uint dev, short type)
     if(dip->type == 0){  // a free inode
       memset(dip, 0, sizeof(*dip));
       dip->type = type;
-      printf("[ialloc] dip: inum=%d type=%d bp=%d\n", inum, type, bp->blockno);
       log_write(bp);   // mark it allocated on the disk
       brelse(bp);
       return iget(dev, inum);
@@ -375,55 +374,23 @@ iunlockput(struct inode *ip)
 
 // Return the disk block address of the nth block in inode ip.
 // If there is no such block, bmap allocates one.
-// static uint
-// bmap(struct inode *ip, uint bn)
-// {
-//   uint addr, *a;
-//   struct buf *bp;
-
-//   if(bn < NDIRECT){
-//     if((addr = ip->addrs[bn]) == 0)
-//       ip->addrs[bn] = addr = balloc(ip->dev);
-//     return addr;
-//   }
-//   bn -= NDIRECT;
-
-//   if(bn < NINDIRECT){
-//     // Load indirect block, allocating if necessary.
-//     if((addr = ip->addrs[NDIRECT]) == 0)
-//       ip->addrs[NDIRECT] = addr = balloc(ip->dev);
-//     bp = bread(ip->dev, addr);
-//     a = (uint*)bp->data;
-//     if((addr = a[bn]) == 0){
-//       a[bn] = addr = balloc(ip->dev);
-//       log_write(bp);
-//     }
-//     brelse(bp);
-//     return addr;
-//   }
-
-//   panic("bmap: out of range");
-// }
-
 static uint
 bmap(struct inode *ip, uint bn)
 {
   uint addr, *a;
   struct buf *bp;
 
-  if(bn < NDIRECT - 1){
+  if(bn < NDIRECT){
     if((addr = ip->addrs[bn]) == 0)
       ip->addrs[bn] = addr = balloc(ip->dev);
-    // if (ip->inum > 1)
-    //   printf("[bmap] ip = %d, addr = %d\n",ip->inum,addr);
     return addr;
   }
-  bn -= NDIRECT - 1;
+  bn -= NDIRECT;
 
   if(bn < NINDIRECT){
     // Load indirect block, allocating if necessary.
-    if((addr = ip->addrs[NDIRECT - 1]) == 0)
-      ip->addrs[NDIRECT - 1] = addr = balloc(ip->dev);
+    if((addr = ip->addrs[NDIRECT]) == 0)
+      ip->addrs[NDIRECT] = addr = balloc(ip->dev);
     bp = bread(ip->dev, addr);
     a = (uint*)bp->data;
     if((addr = a[bn]) == 0){
@@ -435,31 +402,27 @@ bmap(struct inode *ip, uint bn)
   }
   bn -= NINDIRECT;
 
-  if(bn < NINDIRECT * NINDIRECT){
-    // Load indirect block, allocating if necessary.
-    uint dbr = bn / NINDIRECT;
-    uint dbc = bn % NINDIRECT;
-    if((addr = ip->addrs[NDIRECT]) == 0)
-      ip->addrs[NDIRECT] = addr = balloc(ip->dev);
-    
+  if(bn < NDOUBLEINDIRECT){
+    // load doubly-indirect block, allocating if necessary.
+    if((addr = ip->addrs[NDIRECT+1]) == 0){
+      ip->addrs[NDIRECT+1] = addr = balloc(ip->dev);
+    }
     bp = bread(ip->dev, addr);
     a = (uint*)bp->data;
-    if((addr = a[dbr]) == 0){
-      a[dbr] = addr = balloc(ip->dev);
+    if((addr = a[bn/NINDIRECT]) == 0){
+      a[bn/NINDIRECT] = addr = balloc(ip->dev);
       log_write(bp);
     }
     brelse(bp);
-
     bp = bread(ip->dev, addr);
     a = (uint*)bp->data;
-    if((addr = a[dbc]) == 0){
-      a[dbc] = addr = balloc(ip->dev);
+    if((addr = a[bn%NINDIRECT]) == 0){
+      a[bn%NINDIRECT] = addr = balloc(ip->dev);
       log_write(bp);
     }
     brelse(bp);
     return addr;
   }
-  
 
   panic("bmap: out of range");
 }
@@ -490,6 +453,30 @@ itrunc(struct inode *ip)
     brelse(bp);
     bfree(ip->dev, ip->addrs[NDIRECT]);
     ip->addrs[NDIRECT] = 0;
+  }
+
+  int k;
+  uint *a_doubly;
+  struct buf *bp_doubly;
+  if(ip->addrs[NDIRECT+1]){
+    bp = bread(ip->dev, ip->addrs[NDIRECT+1]);
+    a = (uint*)bp->data;
+    for(j = 0; j < NINDIRECT; j++){
+      if(a[j]){
+        bp_doubly = bread(ip->dev, a[j]);
+        a_doubly = (uint*)bp_doubly->data;
+        for(k = 0; k < NINDIRECT; k++){
+          if(a_doubly[k]){
+            bfree(ip->dev, a_doubly[k]);
+          }
+        }
+        brelse(bp_doubly);
+        bfree(ip->dev, a[j]);
+      }
+    }
+    brelse(bp);
+    bfree(ip->dev, ip->addrs[NDIRECT+1]);
+    ip->addrs[NDIRECT+1] = 0;
   }
 
   ip->size = 0;
@@ -561,8 +548,6 @@ writei(struct inode *ip, int user_src, uint64 src, uint off, uint n)
       brelse(bp);
       break;
     }
-    // if (ip->inum > 1)
-    //   printf("[writei] inum=%d bnum=%d\n",ip->inum,bp->blockno);
     log_write(bp);
     brelse(bp);
   }
