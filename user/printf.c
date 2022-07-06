@@ -48,18 +48,20 @@ printptr(int fd, uint64 x) {
 }
 
 // Print to the given fd. Only understands %d, %x, %p, %s.
-void
+int
 vprintf(int fd, const char *fmt, va_list ap)
 {
   char *s;
-  int c, i, state;
+  int c, i, state, cnt;
 
   state = 0;
+  cnt = 0;
   for(i = 0; fmt[i]; i++){
     c = fmt[i] & 0xff;
     if(state == 0){
       if(c == '%'){
         state = '%';
+        cnt++;
       } else {
         putc(fd, c);
       }
@@ -92,6 +94,7 @@ vprintf(int fd, const char *fmt, va_list ap)
       state = 0;
     }
   }
+  return cnt;
 }
 
 void
@@ -103,11 +106,11 @@ fprintf(int fd, const char *fmt, ...)
   vprintf(fd, fmt, ap);
 }
 
-void
+int
 printf(const char *fmt, ...)
 {
   va_list ap;
 
   va_start(ap, fmt);
-  vprintf(1, fmt, ap);
+  return vprintf(1, fmt, ap);
 }

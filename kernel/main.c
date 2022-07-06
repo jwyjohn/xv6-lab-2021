@@ -14,6 +14,16 @@ main()
     consoleinit();
     printfinit();
     printf("\n");
+    
+    // printf(
+    //       "  ____   _____       ___   ___  __ \n"
+    //       " / __ \\ / ____|     / _ \\ / _ \\/_ |\n"
+    //       "| |  | | (___ _____| (_) | | | || |\n"
+    //       "| |  | |\\___ \\______\\__, | | | || |\n"
+    //       "| |__| |____) |       / /| |_| || |\n"
+    //       " \\____/|_____/       /_/  \\___/ |_|\n"
+    //       "                                   \n"
+    //       );
     printf("xv6 kernel is booting\n");
     printf("\n");
     kinit();         // physical page allocator
