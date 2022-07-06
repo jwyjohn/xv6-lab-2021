@@ -16,10 +16,17 @@ uint64 timer_scratch[NCPU][5];
 // assembly code in kernelvec.S for machine-mode timer interrupt.
 extern void timervec();
 
+void pmpinit();
+void sys_clock_init();
+void sys_uart0_init();
+
 // entry.S jumps here in machine mode on stack0.
 void
 start()
 {
+  sys_clock_init();
+  sys_uart0_init();
+
   // set M Previous Privilege mode to Supervisor, for mret.
   unsigned long x = r_mstatus();
   x &= ~MSTATUS_MPP_MASK;
@@ -38,19 +45,18 @@ start()
   w_mideleg(0xffff);
   w_sie(r_sie() | SIE_SEIE | SIE_STIE | SIE_SSIE);
 
-  // configure Physical Memory Protection to give supervisor mode
-  // access to all of physical memory.
-  w_pmpaddr0(0x3fffffffffffffull);
-  w_pmpcfg0(0xf);
+  // switch to supervisor mode and jump to main().
+  pmpinit();
 
   // ask for clock interrupts.
   timerinit();
+
+  *(uint32_t *)PLIC_CTRL = 1;
 
   // keep each CPU's hartid in its tp register, for cpuid().
   int id = r_mhartid();
   w_tp(id);
 
-  // switch to supervisor mode and jump to main().
   asm volatile("mret");
 }
 
@@ -66,7 +72,10 @@ timerinit()
 
   // ask the CLINT for a timer interrupt.
   int interval = 1000000; // cycles; about 1/10th second in qemu.
-  *(uint64*)CLINT_MTIMECMP(id) = *(uint64*)CLINT_MTIME + interval;
+
+  uint64_t t = r_mtime() + 10000000;
+  *(uint32*)CLINT_MTIMECMP(id) = t & 0xffffffff;
+  *(uint32*)(CLINT_MTIMECMP(id)+4) = t >> 32; // ???
 
   // prepare information in scratch[] for timervec.
   // scratch[0..2] : space for timervec to save registers.
@@ -84,5 +93,13 @@ timerinit()
   w_mstatus(r_mstatus() | MSTATUS_MIE);
 
   // enable machine-mode timer interrupts.
-  w_mie(r_mie() | MIE_MTIE);
+  w_mie(r_mie() | MIE_MEIE | MIE_MTIE | MIE_MSIE);
 }
+
+void pmpinit()
+{
+  // see https://l1nxy.me/2021/05/26/fix-xv6-boot/
+  w_pmpaddr0(0xffffffffULL);
+  w_pmpcfg0(0x0FULL); // PMP_R | PMP_W | PMP_X | PMP_MATCH_TOR);
+}
+

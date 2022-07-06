@@ -13,7 +13,7 @@
 // the UART control registers are memory-mapped
 // at address UART0. this macro returns the
 // address of one of the registers.
-#define Reg(reg) ((volatile unsigned char *)(UART0 + reg))
+#define Reg(reg) ((volatile unsigned int *)(UART0 + 4*reg))
 
 // the UART control registers.
 // some have different meanings for
@@ -43,7 +43,7 @@ struct spinlock uart_tx_lock;
 #define UART_TX_BUF_SIZE 32
 char uart_tx_buf[UART_TX_BUF_SIZE];
 uint64 uart_tx_w; // write next to uart_tx_buf[uart_tx_w % UART_TX_BUF_SIZE]
-uint64 uart_tx_r; // read next from uart_tx_buf[uart_tx_r % UART_TX_BUF_SIZE]
+uint64 uart_tx_r; // read next from uart_tx_buf[uar_tx_r % UART_TX_BUF_SIZE]
 
 extern volatile int panicked; // from printf.c
 
@@ -52,28 +52,7 @@ void uartstart();
 void
 uartinit(void)
 {
-  // disable interrupts.
-  WriteReg(IER, 0x00);
-
-  // special mode to set baud rate.
-  WriteReg(LCR, LCR_BAUD_LATCH);
-
-  // LSB for baud rate of 38.4K.
-  WriteReg(0, 0x03);
-
-  // MSB for baud rate of 38.4K.
-  WriteReg(1, 0x00);
-
-  // leave set-baud mode,
-  // and set word length to 8 bits, no parity.
-  WriteReg(LCR, LCR_EIGHT_BITS);
-
-  // reset and enable FIFOs.
-  WriteReg(FCR, FCR_FIFO_ENABLE | FCR_FIFO_CLEAR);
-
-  // enable transmit and receive interrupts.
-  WriteReg(IER, IER_TX_ENABLE | IER_RX_ENABLE);
-
+  // init performed in uartinit.c now
   initlock(&uart_tx_lock, "uart");
 }
 
@@ -172,6 +151,8 @@ uartgetc(void)
     return -1;
   }
 }
+
+extern void sys_uart_putc(int, char);
 
 // handle a uart interrupt, raised because input has
 // arrived, or the uart is ready for more output, or

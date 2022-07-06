@@ -57,7 +57,7 @@ void            itrunc(struct inode*);
 // ramdisk.c
 void            ramdiskinit(void);
 void            ramdiskintr(void);
-void            ramdiskrw(struct buf*);
+void            ramdiskrw(struct buf*, int write);
 
 // kalloc.c
 void*           kalloc(void);
@@ -96,6 +96,7 @@ struct proc*    myproc();
 void            procinit(void);
 void            scheduler(void) __attribute__((noreturn));
 void            sched(void);
+void            setproc(struct proc*);
 void            sleep(void*, struct spinlock*);
 void            userinit(void);
 int             wait(uint64);

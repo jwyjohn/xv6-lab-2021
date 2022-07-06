@@ -9,6 +9,7 @@ _entry:
         # stack0 is declared in start.c,
         # with a 4096-byte stack per CPU.
         # sp = stack0 + (hartid * 4096)
+	csrw mie, 0
         la sp, stack0
         li a0, 1024*4
 	csrr a1, mhartid

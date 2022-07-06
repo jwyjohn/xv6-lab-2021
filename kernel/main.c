@@ -6,11 +6,19 @@
 
 volatile static int started = 0;
 
+extern void sys_uart_putc(uint8_t uart_num, char c);
+extern char bss_start[], bss_end[];
+
 // start() jumps here in supervisor mode on all CPUs.
 void
 main()
 {
-  if(cpuid() == 0){
+  // clear BSS
+  for (volatile unsigned int *p = (volatile unsigned int *)bss_start; p < (volatile unsigned int*)bss_end; p++) {
+	*p = 0;
+  }
+
+  if(0 /* cpuid() */ == 0){
     consoleinit();
     printfinit();
     printf("\n");
@@ -25,9 +33,9 @@ main()
     plicinit();      // set up interrupt controller
     plicinithart();  // ask PLIC for device interrupts
     binit();         // buffer cache
-    iinit();         // inode table
+    iinit();         // inode cache
     fileinit();      // file table
-    virtio_disk_init(); // emulated hard disk
+    ramdiskinit(); // emulated hard disk
     userinit();      // first user process
     __sync_synchronize();
     started = 1;

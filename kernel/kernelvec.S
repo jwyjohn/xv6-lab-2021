@@ -51,7 +51,7 @@ kernelvec:
         ld ra, 0(sp)
         ld sp, 8(sp)
         ld gp, 16(sp)
-        // not this, in case we moved CPUs: ld tp, 24(sp)
+        ld tp, 24(sp)
         ld t0, 32(sp)
         ld t1, 40(sp)
         ld t2, 48(sp)
@@ -102,12 +102,15 @@ timervec:
         sd a3, 16(a0)
 
         # schedule the next timer interrupt
-        # by adding interval to mtimecmp.
-        ld a1, 24(a0) # CLINT_MTIMECMP(hart)
-        ld a2, 32(a0) # interval
-        ld a3, 0(a1)
+        # by adding interval to mtimecmp, based  
+	# on current value in the time CSR.
+	li a1, 0x14004000 # CLINT_MTIMECMP
+	csrr a3, time
+	li a2, 10000000
         add a3, a3, a2
-        sd a3, 0(a1)
+        sw a3, 0(a1)
+	srli a3, a3, 32
+        sw a3, 4(a1)
 
         # raise a supervisor software interrupt.
 	li a1, 2
@@ -119,3 +122,4 @@ timervec:
         csrrw a0, mscratch, a0
 
         mret
+

@@ -59,6 +59,8 @@ printptr(uint64 x)
     consputc(digits[x >> (sizeof(uint64) * 8 - 4)]);
 }
 
+extern void sys_uart_putc(uint8_t num, char c);
+
 // Print to the console. only understands %d, %x, %p, %s.
 void
 printf(char *fmt, ...)
@@ -76,6 +78,7 @@ printf(char *fmt, ...)
 
   va_start(ap, fmt);
   for(i = 0; (c = fmt[i] & 0xff) != 0; i++){
+    // sys_uart_putc(0, c);
     if(c != '%'){
       consputc(c);
       continue;
