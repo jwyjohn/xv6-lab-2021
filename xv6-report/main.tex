@@ -1,0 +1,69 @@
+\documentclass[lang=cn,12pt]{elegantbook}
+
+\title{xv-6 实验报告}
+\subtitle{2022年小学期：操作系统课程设计}
+
+\author{1951510 \; 姜文渊}
+\institute{School of Software Engineering, Tongji University}
+\date{2022年7月1日}
+\version{1.0}
+% \bioinfo{自定义}{信息}
+
+\extrainfo{\textit{Mens et Manus}}
+
+\setcounter{tocdepth}{3}
+
+%\logo{logo-blue.png}
+\cover{cover.png}
+
+% 本文档命令
+\usepackage{array}
+\newcommand{\ccr}[1]{\makecell{{\color{#1}\rule{1cm}{1cm}}}}
+
+\usepackage{float}
+\usepackage{soul}
+
+\lstset{%
+basicstyle=\linespread{0.8}\tt,
+frame=single, %把代码用带有阴影的框圈起来
+breaklines=true, %对过长的代码自动换行
+postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}} %postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space}
+}
+
+% 修改标题页的橙色带
+% \definecolor{customcolor}{RGB}{32,178,170}
+% \colorlet{coverlinecolor}{customcolor}
+
+\renewcommand{\propositionname}{Info}
+\renewcommand{\theoremname}{Warning}
+\renewcommand{\exercisename}{Question}
+
+\begin{document}
+
+\maketitle
+\frontmatter
+\input{preface.tex}
+
+\tableofcontents
+
+\mainmatter
+
+\input{ch1.tex}
+\input{ch2.tex}
+\input{ch3.tex}
+\input{ch4.tex}
+\input{ch5.tex}
+\input{ch6.tex}
+\input{ch7.tex}
+\input{ch8.tex}
+\input{ch9.tex}
+\input{ch10.tex}
+\input{ch11.tex}
+\input{ch12.tex}
+\input{ch13.tex}
+
+\backmatter
+
+\input{acknowledgement.tex}
+
+\end{document}

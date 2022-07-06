@@ -1,0 +1,82 @@
+\chapter{xv6 实验内容概览}
+\begin{introduction}
+    \item xv6 简介
+    \item 实验平台
+    \item 实验项目
+    \item 实验目的
+    \item 本实验报告中的一些记号
+\end{introduction}
+
+\section{xv6 简介}
+
+xv6 是 MIT 开发的一个教学用的完整的类 Unix 操作系统，并且在 MIT 的操作系统课程 6.S081 中使用。通过阅读并理解 xv6 的代码，可以清楚地了解操作系统中众多核心的概念，并且 6.S081 的 Labs 也是基于 xv6 进行的。
+
+xv6 的结构几乎与 Lions 的 Unix v6 一致\footnote{Lions' Commentary on UNIX' 6th Edition, John Lions, Peer to Peer Communications; ISBN: 1-57398-013-7; 1st edition (June 14, 2000).}， 除了运行的体系结构从古老的 PDP-11 换成了现代的 RISC-V 外，其余的一些常见模块，如虚拟存储和文件系统等，沿袭了 Unix v6 的优良传统，虽然整个 xv6 是宏内核架构，但其各部分的组织十分清楚，且有诸多特性和概念也一直被现代的操作系统（不光是类 Unix 系统，甚至 Windows 系统）所使用。
+
+\section{实验平台}
+
+考虑到目前大学生主流使用的还是基于 x86 上 Windows 系统的个人电脑，故而本实验报告中使用的也是 x86\_64 兼容机，安装有 Windows 10 操作系统。实际上，使用现代的 Linux 发行版或 Mac 也是可行的。
+
+整个 xv6 在 2015 年后为了支持 RISC-V 架构而进行了重构，而目前尚没有广泛使用的 RISC-V 架构的商用产品，故而本实验报告中为运行 xv6 ，使用 qemu 以软件方式模拟 RISC-V 架构进行运行。本实验使用支持 RISC-V 为目标平台的 GCC 工具链对 xv6 的代码进行编译和链接，从而产生可以在 RISC-V 裸机上运行的 xv6 内核。由于 GCC 对于 Windows 平台的支持并不完善，故而Qemu 和整套支持 RISC-V 的 GCC 工具链则是运行在虚拟机中的 Ubuntu 20.04 发行版上。
+
+除此以外，笔者在本书的最后一章中会详细介绍如何将 xv6 移植到一块国产的 RISC-V 开发板上并成功通过所有用户测试。由于时间和精力的限制， xv6 的开发者们只为 xv6 适配了最少可以使用的驱动程序，主要包括一个 uart 串口通信的驱动和一个虚拟 IO 的驱动；而各厂家为了留存用户一般不会公开其开发板上外设的驱动程序，因而整个 xv6 与用户的交互局限于串口的命令行中。当然，这对于一个以教学为目标的操作系统来说，已经足够使用了。
+
+\section{实验项目}
+
+笔者本次暑假小学期选取的 xv6 实验为 2021 年版本的 xv6 Labs ，除去实验指导和环境配置部分，共分为以下 10 个实验：
+\begin{enumerate}
+    \item Lab Utilities：实用工具实验
+    \item Lab System calls：系统调用实验
+    \item Lab Page tables：页表实验
+    \item Lab Traps：中断实验
+    \item Lab Copy on-write：写时复制实验
+    \item Lab Multithreading：多线程实验
+    \item Lab network driver：网卡驱动实验
+    \item Lab Lock：锁的实验
+    \item Lab File system：文件系统实验
+    \item Lab mmap：内存映射实验
+\end{enumerate}
+
+这 10 个实验的内容交叉较少，且难度相当，故而并无严格的先后依赖顺序。但是笔者依然按照 6.S081 中推荐的顺序完成这些实验，以方便内容的组织和与原实验的对照。
+
+这些实验中， Lab Utilities 和 Lab System calls 主要涉及操作系统的使用与修改的基本方法； Lab Page tables 、 Lab Traps 、 Lab Multithreading 和 Lab File system 主要涉及操作系统中内存管理、进程管理和文件管理的重要概念；而 Lab Copy on-write 、 Lab network driver 、 Lab Lock 和 Lab mmap 主要是前面介绍的概念的综合应用，且这些应用在真实的现代操作系统中也较为常见。
+
+笔者的上述 10 个实验的解的代码托管在  GitHub 库 jwyjohn/xv6-lab-2021 \footnote{ GitHub库地址为 \url{https://github.com/jwyjohn/xv6-lab-2021/tree/jwy_util} ， 其分支名均以 jwy- 开头} 中。在完成了这 10 个实验项目后，为了在真实的硬件上运行 xv6 操作系统，并且为了让 xv6 能够真正完成一些计算，又额外进行了两个实验。其中一个实验是将 xv6 跑在基于阿里平头哥玄铁 C906 IP核的国产开发板 Lichee RV - Nezha CM \footnote{Lichee RV - Nezha CM \url{https://wiki.sipeed.com/hardware/zh/lichee/RV/RV.html}} 上运行，另一个实验是将一门经典的编程语言 Lisp \footnote{Lisp (programming language) - Wikipedia \url{https://en.wikipedia.org/wiki/Lisp_(programming_language)}} 的一个子集，移植到 xv6 上，并用其编写程序。
+
+设计这两个额外实验的主要目的是为了打通操作系统和软件工程其它分支的隔阂，并充分发挥操作系统“承上启下”的功能：一方面， xv6 作为区区五千行的项目，能够管理 RISC-V 架构的硬件，让用户能够使用；另一方面， xv6 提供的各类服务（系统调用和简单的 libc ）可以供高级语言的编译器、解释器使用，从而使整个计算机系统能够被用户扩充功能。这样，笔者认为整个暑假的操作系统课程设计也算较为完整了。
+
+\section{实验目的}
+
+上述这些实验的目的主要分为三个部分：
+
+\paragraph*{作为用户} 学习如何更好地使用操作系统提供的各类服务。
+
+\paragraph*{作为开发者} 学习如何改进操作系统的功能；学习如何为操作系统编写应用软件和驱动软件；学习如何移植和复用各类软件。
+
+\paragraph*{作为操作系统的设计者} 学习操作系统的整体架构和操作系统中常见的机制，并形成自己对于操作系统设计的一些观点。
+
+\section{本实验报告中的一些记号}
+
+为了方便报告的编写与阅读，本报告中使用如下的记号，表示一些除了正文以外的内容。
+
+~\\
+
+下面两个文本框分别代表两种不同的补充内容。
+\begin{proposition}[这是一条信息]
+    这是一条信息，用于说明一些可能用到的额外知识或者对当前涉及到的内容的补充。
+\end{proposition}
+~\\
+\begin{theorem}[这是一条提醒] 
+    这是一条提醒，用于说明一些实验时可能碰到的问题或常见的错误。
+\end{theorem}
+
+~\\
+
+下面是一个常见的代码框，用于展示代码或输出内容。
+\begin{lstlisting}[language=C]
+123456789-123456789-123456789-123456789-123456789-123456789-123456789-12345678
+void main()
+{
+    return;
+}
+\end{lstlisting}

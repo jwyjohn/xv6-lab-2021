@@ -1,0 +1,61 @@
+\chapter{实验环境配置}
+\begin{introduction}
+    \item 虚拟机安装 Ubuntu 20.04
+    \item 配置 RISC-V 相关工具链
+    \item 获取原始的 xv6 实验代码
+\end{introduction}
+
+\section{虚拟机安装 Ubuntu 20.04}
+
+虽然在目前的 Windows 10 中，微软提供了 Windows Subsystem for Linux （ WSL ）的功能，但由于其兼容性和稳定性的问题，笔者仍然推荐使用传统的虚拟机方式安装整个 xv6 实验用的 Ubuntu 20.04。
+
+笔者选择的是由 Oracle 开源的 Oracle VM VirtualBox 作为虚拟机的平台，其余平台，例如商用的 VMWare 等，其安装过程应当也是类似的。首先到官网下载 Oracle VM VirtualBox 的安装包，访问 \url{https://www.virtualbox.org/wiki/Downloads} 后，选取 Windows hosts 进行下载，然后使用默认设置进行安装，并重启计算机。
+
+\begin{theorem}[硬件虚拟化 VT-x] 
+    注意，使用虚拟机的 x86 兼容机需在 BIOS 中开启 VT-x 等虚拟化选项，一些硬件厂商在出厂时未默认开启，故需要自行查找相关文档进行设置。
+\end{theorem}
+
+安装完成后，下载我们需要的 Ubuntu 20.04 镜像。考虑到国内特殊的网络环境，不建议直接在官网上下载，而是从国内一些高校的镜像站中进行下载。例如，清华大学镜像站 TUNA 提供 Ubuntu 20.04 的镜像见脚注\footnote{\url{https://mirrors.tuna.tsinghua.edu.cn/ubuntu-releases/20.04/ubuntu-20.04.4-desktop-amd64.iso}} 。下载完成后，使用校验值计算工具计算其 SHA256 ，并与官网上提供的校验值进行对比，无误后即可继续使用。
+
+在 Oracle VM VirtualBox 中新建虚拟机，选择系统为 Ubuntu ，然后使用默认设置一路向下，完成虚拟机的创建。然后在存储设置中，将光驱置入我们刚刚下载的镜像，然后启动虚拟机，按 Ubuntu 的提示进行安装，设置时区、账号、密码等。笔者为方便后续步骤，设置的账号为 osexp ，密码为 123456 。
+
+\begin{theorem}[离线安装 Ubuntu] 
+    注意，安装 Ubuntu 时若网络状况不佳，下载各类软件包的时间过长，需要断开虚拟机的网络连接，在离线的状态下进行安装。
+\end{theorem}
+
+Ubuntu 安装完成后，我们需要对其进行一些配置。首先是配置 Ubuntu 的软件源，使其使用国内镜像，以加快安装后续工具链的速度。Ubuntu 的软件源配置文件是 \lstinline{/etc/apt/sources.list}。将系统自带的该文件做个备份，将该文件替换为下面内容，即可使用 TUNA 的软件源镜像。
+\begin{lstlisting}
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ focal main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ focal-updates main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ focal-backports main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ focal-security main restricted universe multiverse
+\end{lstlisting}
+
+配置完成后，以管理员权限执行 \lstinline{apt-get update} ，然后可以安装一些必须的软件。
+
+\begin{proposition}[推荐的操作方式]
+    由于虚拟机的性能限制，笔者不建议直接在虚拟机的桌面系统中进行开发操作，而是建议配置好 ssh 服务器和 VirtualBox 的端口映射，从主机使用 VS Code 等工具通过 ssh 对虚拟机进行操作。具体的配置方式请自行搜索。
+\end{proposition}
+
+\section{配置 RISC-V 相关工具链}
+
+如果前文的镜像配置成功，那就可以直接在 Ubuntu 的终端中使用下面两条命令安装相关工具链：
+\begin{lstlisting}
+sudo apt-get update && sudo apt-get upgrade -y
+sudo apt-get install -y git build-essential gdb-multiarch qemu-system-misc gcc-riscv64-linux-gnu binutils-riscv64-linux-gnu
+\end{lstlisting}
+
+输入管理员密码后，耐心等待即可安装成功，若中途出现问题，则可能需要从安装 Ubuntu 20.04 开始重试。
+
+\section{获取原始的 xv6 实验代码}
+
+首先，确认上述的工具链已经配置完成，各环境变量也都设置好。然后对 git 进行配置，主要在终端中使用下面的命令设置 git 的用户名和邮箱：
+\begin{lstlisting}
+git config --global user.name "jwy"
+git config --global user.email "1951510@tongji.edu.cn"
+\end{lstlisting}
+
+设置完成后，使用 git 将原始的 xv6 代码库克隆下来：
+\begin{lstlisting}
+git clone git://g.csail.mit.edu/xv6-labs-2021
+\end{lstlisting}
